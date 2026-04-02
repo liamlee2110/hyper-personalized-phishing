@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import {
-  Globe, Users, Calendar, MessageSquareText,
+  Globe, Users, Calendar, MessageSquareText, User, BookOpen,
   Link as LinkIcon, SendHorizonal, Loader2, CheckCircle2,
 } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
@@ -65,7 +65,7 @@ export default function DemoPage() {
   return (
     <div className="h-screen flex bg-black text-white overflow-hidden">
       {/* ── Left: Scraped Data ────────────────────────────────────── */}
-      <div className="w-1/2 border-r border-neutral-900 flex flex-col">
+      <div className="w-1/2 border-r border-neutral-900 flex flex-col min-h-0">
         {/* Left header */}
         <div className="h-14 px-8 flex items-center justify-between border-b border-neutral-900 shrink-0">
           <div className="flex items-center gap-3">
@@ -82,18 +82,58 @@ export default function DemoPage() {
           </button>
         </div>
 
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-0">
           <div className="px-8 py-8 space-y-10">
             {/* Target */}
             <section>
               <Label icon={<Globe className="w-3.5 h-3.5" />}>Target Profile</Label>
               <div className="mt-4 p-4 rounded-lg bg-neutral-950 border border-neutral-900 hover:border-cyan/20 transition-colors">
+                {scraped_data.profile_name && (
+                  <p className="text-base font-semibold text-white mb-1">{scraped_data.profile_name}</p>
+                )}
                 <p className="text-sm font-medium text-neutral-200 break-all leading-relaxed">
                   <Link href={scraped_data.profile_url} target="_blank" className="hover:text-cyan transition-colors">{scraped_data.profile_url}</Link>
                 </p>
                 <p className="text-xs text-neutral-600 mt-1">Facebook &middot; Public profile</p>
               </div>
             </section>
+
+            {/* Intro */}
+            {scraped_data.intro && scraped_data.intro.length > 0 && (
+              <section>
+                <Label icon={<User className="w-3.5 h-3.5" />}>Profile Intro</Label>
+                <div className="mt-4 space-y-1.5">
+                  {scraped_data.intro.map((item: string, i: number) => (
+                    <div key={i} className="px-4 py-2 rounded-lg bg-neutral-950 border border-neutral-900 text-[13px] text-neutral-300">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* About */}
+            {scraped_data.about && Object.keys(scraped_data.about).length > 0 && (
+              <section>
+                <Label icon={<BookOpen className="w-3.5 h-3.5" />}>About</Label>
+                <div className="mt-4 space-y-4">
+                  {Object.entries(scraped_data.about).map(([key, items]: [string, any]) => (
+                    <div key={key}>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-600 mb-2">
+                        {key.replace(/_/g, " ")}
+                      </p>
+                      <div className="space-y-1.5">
+                        {items.slice(0, 8).map((item: string, i: number) => (
+                          <div key={i} className="px-4 py-2 rounded-lg bg-neutral-950 border border-neutral-900 text-[13px] text-neutral-300">
+                            {item}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Posts */}
             <section>
@@ -121,10 +161,13 @@ export default function DemoPage() {
               </div>
             </section>
 
-            {/* Connections */}
-            {scraped_data.connections.length > 0 && (
+            {/* Connections & Friends */}
+            {scraped_data.connections && scraped_data.connections.length > 0 && (
               <section>
-                <Label icon={<Users className="w-3.5 h-3.5" />}>Connections</Label>
+                <Label icon={<Users className="w-3.5 h-3.5" />}>
+                  Connections & Friends
+                  <span className="ml-2 text-neutral-700">{scraped_data.connections.length}</span>
+                </Label>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {scraped_data.connections.map((conn: any, i: number) => (
                     <span
@@ -132,6 +175,9 @@ export default function DemoPage() {
                       className="px-3 py-1.5 rounded-md text-xs font-medium bg-neutral-950 border border-neutral-900 text-neutral-400 hover:border-purple/30 hover:text-neutral-300 transition-colors"
                     >
                       {conn.name}
+                      {conn.frequency && conn.frequency !== "low" && (
+                        <span className="ml-1.5 text-[10px] text-neutral-600">({conn.frequency})</span>
+                      )}
                     </span>
                   ))}
                 </div>
