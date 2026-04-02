@@ -20,5 +20,11 @@
   "packageManager": "pnpm@9.0.6",
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "axios": "^1.13.6",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^12.36.0",
+    "recharts": "^3.8.0"
   }
 }
