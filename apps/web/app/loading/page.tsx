@@ -70,7 +70,14 @@ function LoadingContent() {
         setTimeout(() => router.push("/demo"), 600);
       } catch (err: any) {
         clearInterval(progressInterval);
-        setError(err.message || "An unexpected error occurred");
+        const msg = err.message || "";
+        if (msg === "Failed to fetch" || msg.includes("502")) {
+          setError(
+            "Backend is waking up or ran out of memory. Wait ~30s and try again."
+          );
+        } else {
+          setError(msg || "An unexpected error occurred");
+        }
       }
     };
 
