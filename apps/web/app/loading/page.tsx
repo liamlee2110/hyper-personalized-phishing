@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { CheckCircle2, CircleDashed, Database, Server, Brain, Mail } from "lucide-react";
@@ -14,7 +14,7 @@ const steps = [
   { id: "formatting", label: "Formatting email", icon: Mail },
 ];
 
-export default function LoadingPage() {
+function LoadingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const url = searchParams.get("url") || "";
@@ -136,5 +136,21 @@ export default function LoadingPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function LoadingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6">
+        <div className="w-full max-w-sm space-y-8">
+          <div className="space-y-2">
+            <h2 className="text-lg font-bold tracking-tight">Loading...</h2>
+          </div>
+        </div>
+      </div>
+    }>
+      <LoadingContent />
+    </Suspense>
   );
 }
