@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import {
   Globe, Users, Calendar, MessageSquareText, User, BookOpen,
-  Link as LinkIcon, SendHorizonal, Loader2, CheckCircle2,
+  Link as LinkIcon, SendHorizonal, Loader2, CheckCircle2, ChevronRight,
 } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
@@ -62,12 +62,17 @@ export default function DemoPage() {
     ? scraped_data.tone_analysis.split(",").map((t: string) => t.trim()).filter(Boolean)
     : [];
 
+  const hasIntro = scraped_data.intro && scraped_data.intro.length > 0;
+  const hasAbout = scraped_data.about && Object.keys(scraped_data.about).length > 0;
+  const hasConnections = scraped_data.connections && scraped_data.connections.length > 0;
+  const hasEvents = scraped_data.events && scraped_data.events.length > 0;
+  const hasTone = toneLabels.length > 0;
+
   return (
     <div className="h-screen flex bg-black text-white overflow-hidden">
       {/* ── Left: Scraped Data ────────────────────────────────────── */}
       <div className="w-1/2 border-r border-neutral-900 flex flex-col min-h-0">
-        {/* Left header */}
-        <div className="h-14 px-8 flex items-center justify-between border-b border-neutral-900 shrink-0">
+        <div className="h-14 px-6 flex items-center justify-between border-b border-neutral-900 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-cyan shadow-[0_0_6px_rgba(0,250,252,0.6)]" />
             <span className="text-xs font-bold tracking-[0.15em] uppercase text-neutral-500">
@@ -83,145 +88,156 @@ export default function DemoPage() {
         </div>
 
         <ScrollArea className="flex-1 min-h-0">
-          <div className="px-8 py-8 space-y-10">
-            {/* Target */}
-            <section>
-              <Label icon={<Globe className="w-3.5 h-3.5" />}>Target Profile</Label>
-              <div className="mt-4 p-4 rounded-lg bg-neutral-950 border border-neutral-900 hover:border-cyan/20 transition-colors">
-                {scraped_data.profile_name && (
-                  <p className="text-base font-semibold text-white mb-1">{scraped_data.profile_name}</p>
-                )}
-                <p className="text-sm font-medium text-neutral-200 break-all leading-relaxed">
-                  <Link href={scraped_data.profile_url} target="_blank" className="hover:text-cyan transition-colors">{scraped_data.profile_url}</Link>
-                </p>
-                <p className="text-xs text-neutral-600 mt-1">Facebook &middot; Public profile</p>
+          <div className="px-6 py-5 space-y-4">
+            {/* ── Profile summary bar ── */}
+            <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-neutral-950 border border-neutral-900">
+              <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-xs font-bold text-cyan shrink-0">
+                {(scraped_data.profile_name || "?").charAt(0).toUpperCase()}
               </div>
-            </section>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-white truncate">{scraped_data.profile_name || "Unknown"}</p>
+                <Link
+                  href={scraped_data.profile_url}
+                  target="_blank"
+                  className="text-[11px] text-neutral-500 hover:text-cyan transition-colors truncate block"
+                >
+                  {scraped_data.profile_url}
+                </Link>
+              </div>
+            </div>
 
-            {/* Intro */}
-            {scraped_data.intro && scraped_data.intro.length > 0 && (
-              <section>
-                <Label icon={<User className="w-3.5 h-3.5" />}>Profile Intro</Label>
-                <div className="mt-4 space-y-1.5">
-                  {scraped_data.intro.map((item: string, i: number) => (
-                    <div key={i} className="px-4 py-2 rounded-lg bg-neutral-950 border border-neutral-900 text-[13px] text-neutral-300">
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
+            {/* ── Info accordion ── */}
+            <div className="rounded-lg border border-neutral-900 bg-neutral-950 overflow-hidden divide-y divide-neutral-900">
+              {hasIntro && (
+                <Accordion
+                  icon={<User className="w-3.5 h-3.5" />}
+                  title="Profile Intro"
+                  badge={scraped_data.intro.length}
+                >
+                  <div className="space-y-1">
+                    {scraped_data.intro.map((item: string, i: number) => (
+                      <p key={i} className="text-[13px] text-neutral-300 py-1">{item}</p>
+                    ))}
+                  </div>
+                </Accordion>
+              )}
 
-            {/* About */}
-            {scraped_data.about && Object.keys(scraped_data.about).length > 0 && (
-              <section>
-                <Label icon={<BookOpen className="w-3.5 h-3.5" />}>About</Label>
-                <div className="mt-4 space-y-4">
-                  {Object.entries(scraped_data.about).map(([key, items]: [string, any]) => (
-                    <div key={key}>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-600 mb-2">
-                        {key.replace(/_/g, " ")}
-                      </p>
-                      <div className="space-y-1.5">
-                        {items.slice(0, 8).map((item: string, i: number) => (
-                          <div key={i} className="px-4 py-2 rounded-lg bg-neutral-950 border border-neutral-900 text-[13px] text-neutral-300">
-                            {item}
-                          </div>
+              {hasAbout && (
+                <Accordion
+                  icon={<BookOpen className="w-3.5 h-3.5" />}
+                  title="About"
+                  badge={Object.values(scraped_data.about).flat().length}
+                >
+                  <div className="space-y-3">
+                    {Object.entries(scraped_data.about).map(([key, items]: [string, any]) => (
+                      <div key={key}>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-600 mb-1">
+                          {key.replace(/_/g, " ")}
+                        </p>
+                        {items.slice(0, 6).map((item: string, i: number) => (
+                          <p key={i} className="text-[13px] text-neutral-300 py-0.5">{item}</p>
                         ))}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
+                    ))}
+                  </div>
+                </Accordion>
+              )}
 
-            {/* Posts */}
-            <section>
-              <Label icon={<MessageSquareText className="w-3.5 h-3.5" />}>
-                Extracted Posts
-                <span className="ml-2 text-neutral-700">{scraped_data.recent_posts.length}</span>
-              </Label>
-              <div className="mt-4 space-y-3">
+              {hasConnections && (
+                <Accordion
+                  icon={<Users className="w-3.5 h-3.5" />}
+                  title="Connections"
+                  badge={scraped_data.connections.length}
+                >
+                  <div className="flex flex-wrap gap-1.5">
+                    {scraped_data.connections.map((conn: any, i: number) => (
+                      <span
+                        key={i}
+                        className="px-2 py-1 rounded text-[11px] bg-neutral-900 text-neutral-400"
+                      >
+                        {conn.name}
+                      </span>
+                    ))}
+                  </div>
+                </Accordion>
+              )}
+
+              {hasEvents && (
+                <Accordion
+                  icon={<Calendar className="w-3.5 h-3.5" />}
+                  title="Events"
+                  badge={scraped_data.events.length}
+                >
+                  <div className="space-y-1.5">
+                    {scraped_data.events.map((event: any, i: number) => (
+                      <div key={i}>
+                        <p className="text-[13px] text-neutral-200">{event.name}</p>
+                        <p className="text-[11px] text-neutral-600">{event.role}</p>
+                      </div>
+                    ))}
+                  </div>
+                </Accordion>
+              )}
+
+              {hasTone && (
+                <Accordion
+                  icon={<Globe className="w-3.5 h-3.5" />}
+                  title="Tone"
+                >
+                  <div className="flex flex-wrap gap-1.5">
+                    {toneLabels.map((tone: string, i: number) => (
+                      <span
+                        key={i}
+                        className="px-2 py-0.5 text-[11px] rounded-full border border-cyan/20 text-cyan/70 bg-cyan/5"
+                      >
+                        {tone}
+                      </span>
+                    ))}
+                  </div>
+                </Accordion>
+              )}
+            </div>
+
+            {/* ── Posts (main content) ── */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <MessageSquareText className="w-3.5 h-3.5 text-neutral-600" />
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-600">
+                  Extracted Posts
+                </h3>
+                <span className="text-[10px] font-bold text-neutral-700">{scraped_data.recent_posts.length}</span>
+              </div>
+              <div className="space-y-2.5">
                 {scraped_data.recent_posts.map((post: any, i: number) => (
                   <div
                     key={i}
                     className="p-4 rounded-lg bg-neutral-950 border border-neutral-900 hover:border-neutral-800 transition-colors"
                   >
-                    <p className="text-[13px] leading-[1.7] text-neutral-300">
+                    {post.author && (
+                      <p className="text-[11px] font-semibold text-neutral-500 mb-1.5">{post.author}</p>
+                    )}
+                    <p className="text-[13px] leading-[1.7] text-neutral-300 whitespace-pre-wrap">
                       {post.text}
                     </p>
-                    {(post.likes > 0 || post.comments > 0) && (
-                      <div className="flex gap-4 mt-3 text-xs text-neutral-600">
-                        {post.likes > 0 && <span>{post.likes} reactions</span>}
-                        {post.comments > 0 && <span>{post.comments} comments</span>}
-                      </div>
-                    )}
+                    <div className="flex gap-4 mt-2.5 text-[11px] text-neutral-600">
+                      {post.date && post.date !== "Recent" && <span>{post.date}</span>}
+                      {post.likes > 0 && <span>{post.likes} reactions</span>}
+                      {post.comments > 0 && <span>{post.comments} comments</span>}
+                      {post.shares > 0 && <span>{post.shares} shares</span>}
+                    </div>
                   </div>
                 ))}
+                {scraped_data.recent_posts.length === 0 && (
+                  <p className="text-xs text-neutral-700 py-4 text-center">No posts extracted</p>
+                )}
               </div>
-            </section>
-
-            {/* Connections & Friends */}
-            {scraped_data.connections && scraped_data.connections.length > 0 && (
-              <section>
-                <Label icon={<Users className="w-3.5 h-3.5" />}>
-                  Connections & Friends
-                  <span className="ml-2 text-neutral-700">{scraped_data.connections.length}</span>
-                </Label>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {scraped_data.connections.map((conn: any, i: number) => (
-                    <span
-                      key={i}
-                      className="px-3 py-1.5 rounded-md text-xs font-medium bg-neutral-950 border border-neutral-900 text-neutral-400 hover:border-purple/30 hover:text-neutral-300 transition-colors"
-                    >
-                      {conn.name}
-                      {conn.frequency && conn.frequency !== "low" && (
-                        <span className="ml-1.5 text-[10px] text-neutral-600">({conn.frequency})</span>
-                      )}
-                    </span>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Events */}
-            {scraped_data.events.length > 0 && (
-              <section>
-                <Label icon={<Calendar className="w-3.5 h-3.5" />}>Events</Label>
-                <div className="mt-4 space-y-2">
-                  {scraped_data.events.map((event: any, i: number) => (
-                    <div key={i} className="p-3 rounded-lg bg-neutral-950 border border-neutral-900">
-                      <p className="text-sm font-medium text-neutral-200">{event.name}</p>
-                      <p className="text-xs text-neutral-600 mt-1">{event.role}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Tone */}
-            {toneLabels.length > 0 && (
-              <section>
-                <Label>Detected Tone</Label>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {toneLabels.map((tone: string, i: number) => (
-                    <span
-                      key={i}
-                      className="px-3 py-1 text-xs rounded-full border border-cyan/20 text-cyan/70 bg-cyan/5"
-                    >
-                      {tone}
-                    </span>
-                  ))}
-                </div>
-              </section>
-            )}
+            </div>
           </div>
         </ScrollArea>
       </div>
 
       {/* ── Right: Email Preview ──────────────────────────────────── */}
       <div className="w-1/2 flex flex-col">
-        {/* Right header */}
         <div className="h-14 px-8 flex items-center justify-between border-b border-neutral-900 shrink-0">
           <span className="text-xs font-bold tracking-[0.15em] uppercase text-neutral-500">
             Generated Email
@@ -265,9 +281,7 @@ export default function DemoPage() {
 
         <ScrollArea className="flex-1">
           <div className="p-8">
-            {/* Email card */}
             <div className="rounded-xl bg-white text-neutral-900 overflow-hidden shadow-[0_0_40px_rgba(0,250,252,0.05)]">
-              {/* Subject + Sender */}
               <div className="px-8 pt-8 pb-5">
                 <h1 className="text-xl font-semibold leading-tight tracking-tight">
                   {phishing_email.subject}
@@ -287,18 +301,12 @@ export default function DemoPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Divider */}
               <div className="mx-8 border-t border-neutral-100" />
-
-              {/* Body */}
               <div className="px-8 py-6">
                 <div className="text-[15px] leading-[1.8] text-neutral-700 whitespace-pre-wrap">
                   {phishing_email.body}
                 </div>
               </div>
-
-              {/* CTA */}
               <div className="px-8 pb-8">
                 <div className="flex flex-col items-start gap-2 pt-4 border-t border-neutral-100">
                   <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-800 transition-colors">
@@ -318,11 +326,36 @@ export default function DemoPage() {
   );
 }
 
-function Label({ icon, children }: { icon?: React.ReactNode; children: React.ReactNode }) {
+function Accordion({
+  icon,
+  title,
+  badge,
+  children,
+}: {
+  icon?: React.ReactNode;
+  title: string;
+  badge?: number;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
   return (
-    <h3 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-600">
-      {icon}
-      {children}
-    </h3>
+    <div>
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left cursor-pointer hover:bg-neutral-900/50 transition-colors"
+      >
+        <ChevronRight
+          className={`w-3 h-3 text-neutral-600 shrink-0 transition-transform duration-200 ${open ? "rotate-90" : ""}`}
+        />
+        {icon && <span className="text-neutral-600 shrink-0">{icon}</span>}
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-neutral-500 flex-1">
+          {title}
+        </span>
+        {badge != null && (
+          <span className="text-[10px] tabular-nums text-neutral-700">{badge}</span>
+        )}
+      </button>
+      {open && <div className="px-4 pb-3">{children}</div>}
+    </div>
   );
 }
